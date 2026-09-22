@@ -196,3 +196,39 @@ jobs:
         run: |
           docker push \
             ${{ vars.ACR_LOGIN_SERVER }}/${{ matrix.image }}:${{ github.sha }}
+
+  # =========================================================
+  # Container Security Scan
+  # =========================================================
+  security-scan:
+    name: Docker Scout Security Scan
+    runs-on: ubuntu-latest
+
+    needs:
+      - build-and-push
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Login to Azure Container Registry
+        run: |
+          az acr login --name ${{ vars.ACR_NAME }}
+
+      - name: Pull student-service image
+        run: |
+          docker pull \
+            ${{ vars.ACR_LOGIN_SERVER }}/koalatech-student-service:${{ github.sha }}
+
+      - name: Docker Scout vulnerability scan
+        uses: docker/scout-action@v1
+        with:
+          command: cves
+          image: ${{ vars.ACR_LOGIN_SERVER }}/koalatech-student-service:${{ github.sha }}
+          only-severities: critical,high
+          write-comment: false
