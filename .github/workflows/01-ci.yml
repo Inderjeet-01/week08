@@ -225,10 +225,12 @@ jobs:
           docker pull \
             ${{ vars.ACR_LOGIN_SERVER }}/koalatech-student-service:${{ github.sha }}
 
+      - name: Install Docker Scout CLI
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh | sh -s --
+
       - name: Docker Scout vulnerability scan
-        uses: docker/scout-action@v1
-        with:
-          command: cves
-          image: ${{ vars.ACR_LOGIN_SERVER }}/koalatech-student-service:${{ github.sha }}
-          only-severities: critical,high
-          write-comment: false
+        run: |
+          docker scout cves \
+            ${{ vars.ACR_LOGIN_SERVER }}/koalatech-student-service:${{ github.sha }} \
+            --only-severity critical,high
